@@ -34,7 +34,9 @@ export class LoginComponent implements OnInit {
                 username: this.form.value.username,
                 password: this.form.value.password,
                 messages: [],
-                topics: []
+                topics: [],
+                admin: false,
+                isAdmin: false
             }
 
             this.usersService.login(user).subscribe((user: User) => {

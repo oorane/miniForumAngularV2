@@ -31,10 +31,10 @@
             </mat-form-field>
             
             <div class="action-buttons-container" *ngIf="connectedUser">
-                <button mat-raised-button color="primary" *ngIf="editedTopic !== topic" (click)="onChangeEditedTopic(topic)">Modifier</button>
+                <button mat-raised-button color="primary" *ngIf="(editedTopic !== topic) && (userIsAdmin() || userIsAuthor(topic))" (click)="onChangeEditedTopic(topic)">Modifier</button>
                 <button mat-raised-button color="accent" *ngIf="editedTopic === topic" (click)="onEditTopic(topic)">Enregistrer</button>
 
-                <button mat-raised-button color="warn" (click)="onDeleteTopic(topic)">Supprimer</button>
+                <button mat-raised-button color="warn" *ngIf="userIsAdmin() || userIsAuthor(topic)" (click)="onDeleteTopic(topic)">Supprimer</button>
             </div>
         </li>
     </ul>

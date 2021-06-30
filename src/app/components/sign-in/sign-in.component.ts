@@ -38,7 +38,9 @@ export class SignInComponent implements OnInit {
                 password: this.form.value.password,
                 passwordConfirm: this.form.value.passwordConfirm,
                 messages: [],
-                topics: []
+                topics: [],
+                admin:false,
+                isAdmin: false
             }
     
             this.usersService.createNewUser(user).subscribe((user: User) => {

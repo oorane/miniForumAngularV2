@@ -1,8 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { FormGroup, FormBuilder, Validators, FormControl } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { DialogConfirmComponent } from 'src/app/dialogs/dialog-confirm.component';
 import { Message } from 'src/app/models/Message';
 import { Topic } from 'src/app/models/Topic';
 import { User } from 'src/app/models/User';
@@ -24,13 +26,21 @@ export class TopicComponent implements OnInit, OnDestroy {
     connectedUser: User;
     connectedUserSubscription: Subscription;
 
+    editedMessage?: Message;
+    editMessageControl: FormControl;
+
+    dialogRefSubscription: Subscription;
+
+    inter = setInterval(() => {this.onRefreshMessages(); console.log('> Messages actualisés.');}, 3000);
+
     constructor(
         private formBuilder: FormBuilder,
         private usersService: UsersService,
         private topicsService: TopicsService,
         private messagesService: MessagesService,
         private route: ActivatedRoute,
-        private snackBar: MatSnackBar
+        private snackBar: MatSnackBar,
+        private dialog: MatDialog
     ) { }
 
     ngOnInit(): void {
@@ -54,6 +64,71 @@ export class TopicComponent implements OnInit, OnDestroy {
         });
 
         this.usersService.emitConnectedUser();
+
+        this.editMessageControl = this.formBuilder.control(['', [Validators.minLength(10), Validators.maxLength(3000)]]);
+    }
+
+    onChangeEditedMessage(message: Message): void {
+        this.editedMessage = (this.editedMessage === message) ? undefined : message;
+        this.editMessageControl.setValue(message.content);
+    }
+
+    onEditMessage(message: Message): void {
+        if (this.editMessageControl.valid) {
+            this.messagesService.updateMessage(message, this.editMessageControl.value).subscribe((message: Message) => {
+                this.messagesService.messages = this.messagesService.messages.map((msgElt: Message) => {
+                    if (msgElt.id === message.id) {
+                        msgElt.content = message.content;
+                    }
+
+                    return msgElt;
+                 });
+
+                 this.messagesService.emitMessages();
+
+                 this.snackBar.open('Le message du sujet a bien été modifié', 'Fermer', { duration: 3000 });
+
+                 this.editedMessage = undefined;
+                 this.onRefreshMessages();
+            }, error => {
+                this.snackBar.open('Une erreur est survenue. Veuillez vérifier votre saisie', 'Fermer', { duration: 3000 });
+            });
+        }
+    }
+
+    onDeleteMessage(message: Message): void {
+        const dialogRef = this.dialog.open(DialogConfirmComponent, {
+            data: {
+                title: 'Êtes-vous sûr de vouloir supprimer ce message ?',
+                content: 'Cette action est irréversible.',
+                action: 'Supprimer'
+            },
+            autoFocus: false
+        });
+
+        this.dialogRefSubscription = dialogRef.afterClosed().subscribe(confirm => {
+            if (confirm) {
+                this.messagesService.deleteMessage(message).subscribe(response => {
+                    this.messagesService.messages = this.messagesService.messages.filter(msgElt => msgElt.id !== message.id);
+                    this.messagesService.emitMessages();
+        
+                    this.editedMessage = undefined;
+        
+                    this.snackBar.open('Le message a bien été supprimé', 'Fermer', { duration: 3000 });
+                    this.onRefreshMessages();
+                }, error => {
+                    this.snackBar.open('Une erreur est survenue. Veuillez vérifier votre saisie', 'Fermer', { duration: 3000 });
+                });
+            }
+        });
+    }
+
+    userIsAuthor(message: Message): boolean {
+        return (this.connectedUser.id === message.author.id) ? true : false;
+    }
+
+    userIsAdmin(): boolean {
+        return (this.connectedUser.admin === true) ? true : false;
     }
 
     onRefreshMessages(): void {
@@ -69,7 +144,27 @@ export class TopicComponent implements OnInit, OnDestroy {
             this.snackBar.open('Messages actualisés', 'Fermer', { duration: 3000 });
         }, error => {
             this.snackBar.open('Une erreur est survenue lors de l\'actualisation des messages', 'Fermer', { duration: 3000 });
-        });
+        });    
+    }
+
+    remplace(expr: string, a: string, b: string): string {
+        let i=0;
+        while (i!=-1) {
+            i=expr.indexOf(a,i);
+            if (i>=0) {
+                expr=expr.substring(0,i)+b+expr.substring(i+a.length);
+                i+=b.length;
+            }
+        }
+        return expr;
+    }
+    
+    getMessageContentWithBBCode(message: Message) {
+        let paragraph = document.getElementById(message.id!.toString());
+        let formatedContent = message.content;
+        formatedContent = paragraph!.innerHTML = this.remplace(this.remplace(formatedContent, '[b]', '<b>'), '[/b]', '</b>');
+        formatedContent = paragraph!.innerHTML = this.remplace(this.remplace(formatedContent, '[i]', '<i>'), '[/i]', '</i>');
+        paragraph!.innerHTML = this.remplace(this.remplace(formatedContent, '[u]', '<u>'), '[/u]', '</u>');
     }
 
     onSubmit(): void {
@@ -115,6 +210,13 @@ export class TopicComponent implements OnInit, OnDestroy {
         if (this.topicSubscription) {
             this.topicSubscription.unsubscribe();
         }
+
+        if (this.dialogRefSubscription) {
+            this.dialogRefSubscription.unsubscribe();
+        }
+
+        clearInterval(this.inter);
+
     }
 
     getErrorMessage(formControlName: string): string|void {

@@ -8,9 +8,23 @@
     
     <ul>
         <li *ngFor="let message of topic.messages">
-            <h3>{{ message | messageInfos }}</h3>
-    
-            <p>{{ message.content }}</p>
+            <div class="msgContent">
+                <h3 *ngIf="editedMessage !== message">{{ message | messageInfos }}</h3>
+        
+                <p id={{message.id}} *ngIf="editedMessage !== message">{{ getMessageContentWithBBCode(message) }}</p>
+
+                <mat-form-field *ngIf="editedMessage === message && connectedUser">
+                    <mat-label>Titre</mat-label>
+                    <input type="text" matInput required [formControl]="editMessageControl">
+                    <mat-error *ngIf="editMessageControl.invalid"> fffff </mat-error>
+                </mat-form-field>
+            </div>
+            <div class="action-buttons-container" *ngIf="connectedUser">
+                <button class="msgManagementButtons" mat-raised-button color="primary" *ngIf="editedMessage !== message && userIsAuthor(message)" (click)="onChangeEditedMessage(message)">Modifier</button>
+                <button class="msgManagementButtons" mat-raised-button color="accent" *ngIf="editedMessage === message" (click)="onEditMessage(message)">Enregistrer</button>
+
+                <button class="msgManagementButtons" mat-raised-button color="warn" *ngIf="userIsAdmin()" (click)="onDeleteMessage(message)">Supprimer</button>
+            </div>
         </li>
     </ul>
 </div>

@@ -1,0 +1,29 @@
+<section>
+    <mat-form-field>
+        <mat-label>Filtrer par nom</mat-label>
+        <input type="text" matInput [formControl]="filterControl">
+    </mat-form-field>
+
+    <ul>
+        <li *ngFor="let user of filteredUsers">
+            
+            <p *ngIf="editedUser !== user">{{ user.username }}</p>
+
+            <mat-form-field *ngIf="editedUser === user">
+                <mat-label>Nom</mat-label>
+                <input type="text" matInput required [formControl]="editUserControl">
+                <mat-error *ngIf="editUserControl.invalid"> Erreur </mat-error>
+            </mat-form-field>
+
+            <mat-checkbox *ngIf="editedUser === user"  [disabled]=false [checked]=(user.admin!) class="example-margin" [formControl]="editUserAdminControl">Admin</mat-checkbox>
+            <mat-checkbox *ngIf="editedUser !== user" disabled [checked]=(user.admin!) class="example-margin">Admin</mat-checkbox>
+
+            <div class="action-buttons-container">
+                <button *ngIf="editedUser !== user && connectedUserIsAdmin()" mat-raised-button color="primary" (click)="onChangeEditedUser(user)">Modifier</button>
+                <button *ngIf="editedUser === user && connectedUserIsAdmin()" mat-raised-button color="accent" (click)="onEditUser(user)">Enregistrer</button>
+
+                <button *ngIf="connectedUserIsAdmin()" mat-raised-button color="warn" (click)="onDeleteUser(user)">Supprimer</button>
+            </div>
+        </li>
+    </ul>
+</section>

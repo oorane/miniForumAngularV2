@@ -59,4 +59,8 @@ export class UsersService {
     updateUser(user: User): Observable<User> {
         return this.httpClient.patch<User>(this.apiUrl + 'api/user/' + user.id, user);
     }
+
+    deleteUser(user: User): Observable<any> {
+        return this.httpClient.delete(this.apiUrl + 'api/user/' + user.id);
+    }
 }

@@ -50,7 +50,9 @@ export class EditUserComponent implements OnInit, OnDestroy {
                 passwordConfirm: this.form.value.passwordConfirm,
                 oldPassword: this.form.value.oldPassword,
                 messages: [],
-                topics: []
+                topics: [],
+                isAdmin:false,
+                
             }
     
             this.usersService.updateUser(user).subscribe((user: User) => {

@@ -2,7 +2,7 @@ mat-form-field, button:not(#topic-title-header button) {
     width: 100%;
 }
 
-li {
+.msgContent {
     padding: 10px;
     background-color: rgb(236, 236, 236);
     border: 2px solid var(--primary-color);
@@ -27,4 +27,13 @@ ul {
 
 #topic-infos {
     margin-bottom: var(--small-margin);
+}
+
+.action-buttons-container {
+    margin-top: 3px;
+}
+
+.msgManagementButtons {
+    margin-top: 3px;
+    width: 20%;
 }
